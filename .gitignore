@@ -1,0 +1,8 @@
+*.class
+.classpath
+.project
+.settings
+.metadata
+bin
+target
+config.yml
