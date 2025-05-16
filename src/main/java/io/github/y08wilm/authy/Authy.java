@@ -1,47 +1,28 @@
 package io.github.y08wilm.authy;
 
 import io.github.y08wilm.authy.bukkit.ConfigurationManager;
+import io.github.y08wilm.authy.data.types.Auth;
 import io.undertow.Undertow;
-import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.ConduitFactory;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.HttpString;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.MessageDigest;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
-import java.util.List;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.xnio.conduits.AbstractStreamSourceConduit;
-import org.xnio.conduits.StreamSourceConduit;
 
 public class Authy implements HttpHandler {
 
-	public HashMap<String, String> ipUaToAuthorization = new HashMap<>();
+	public HashMap<String, Auth> ipUaToAuthorization = new HashMap<>();
 
 	public io.undertow.server.handlers.proxy.SimpleProxyClientProvider proxyClientProvider;
+
+	public String url;
 
 	public int listen_port;
 
@@ -64,10 +45,12 @@ public class Authy implements HttpHandler {
 			}
 		});
 		thread.start();
+		this.url = this.getConfig().getString("url", "http://localhost:8008");
 		this.listen_port = this.getConfig().getInt("listen_port", 4242);
+		this.getConfig().set("url", this.url);
 		this.getConfig().set("listen_port", this.listen_port);
 		proxyClientProvider = new io.undertow.server.handlers.proxy.SimpleProxyClientProvider(
-				new URL("http://localhost:8008").toURI());
+				new URL(url).toURI());
 		Undertow server = Undertow.builder()
 				.addHttpListener(this.listen_port, "localhost")
 				.setHandler(this).build();
@@ -125,11 +108,13 @@ public class Authy implements HttpHandler {
 			}
 			if (access_token != null) {
 				access_token = access_token.replace("Bearer ", "");
+				Auth auth = new Auth(access_token, System.currentTimeMillis()
+						+ (60_000L * 5));
 				ipUaToAuthorization.put(
 						ip
 								+ (user_agent.indexOf("/") != -1 ? user_agent
 										.substring(0, user_agent.indexOf("/"))
-										: user_agent), access_token);
+										: user_agent), auth);
 				System.out.println("access token " + access_token
 						+ " verified for " + ip + " with ua " + user_agent);
 			} else {
@@ -137,16 +122,19 @@ public class Authy implements HttpHandler {
 						+ (user_agent.indexOf("/") != -1 ? user_agent
 								.substring(0, user_agent.indexOf("/"))
 								: user_agent))) {
-					exchange.getRequestHeaders()
-							.add(HttpString.tryFromString("authorization"),
-									"Bearer "
-											+ ipUaToAuthorization.get(ip
-													+ (user_agent.indexOf("/") != -1 ? user_agent
-															.substring(
-																	0,
-																	user_agent
-																			.indexOf("/"))
-															: user_agent)));
+					Auth auth = ipUaToAuthorization.get(ip
+							+ (user_agent.indexOf("/") != -1 ? user_agent
+									.substring(0, user_agent.indexOf("/"))
+									: user_agent));
+					if (auth.getExpire_at() < System.currentTimeMillis()) {
+						System.out.println("ERROR: access token "
+								+ auth.getAccess_token() + " is expired for "
+								+ ip + " with ua " + user_agent);
+					} else {
+						exchange.getRequestHeaders().add(
+								HttpString.tryFromString("authorization"),
+								"Bearer " + auth.getAccess_token());
+					}
 				} else {
 					System.out
 							.println("ERROR: access token could not be verified for "
