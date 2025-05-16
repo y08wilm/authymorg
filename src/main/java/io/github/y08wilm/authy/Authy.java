@@ -125,15 +125,28 @@ public class Authy implements HttpHandler {
 			}
 			if (access_token != null) {
 				access_token = access_token.replace("Bearer ", "");
-				ipUaToAuthorization.put(ip + user_agent, access_token);
+				ipUaToAuthorization.put(
+						ip
+								+ (user_agent.indexOf("/") != -1 ? user_agent
+										.substring(0, user_agent.indexOf("/"))
+										: user_agent), access_token);
 				System.out.println("access token " + access_token
 						+ " verified for " + ip + " with ua " + user_agent);
 			} else {
-				if (ipUaToAuthorization.containsKey(ip + user_agent)) {
-					exchange.getRequestHeaders().add(
-							HttpString.tryFromString("authorization"),
-							"Bearer "
-									+ ipUaToAuthorization.get(ip + user_agent));
+				if (ipUaToAuthorization.containsKey(ip
+						+ (user_agent.indexOf("/") != -1 ? user_agent
+								.substring(0, user_agent.indexOf("/"))
+								: user_agent))) {
+					exchange.getRequestHeaders()
+							.add(HttpString.tryFromString("authorization"),
+									"Bearer "
+											+ ipUaToAuthorization.get(ip
+													+ (user_agent.indexOf("/") != -1 ? user_agent
+															.substring(
+																	0,
+																	user_agent
+																			.indexOf("/"))
+															: user_agent)));
 				} else {
 					System.out
 							.println("ERROR: access token could not be verified for "
