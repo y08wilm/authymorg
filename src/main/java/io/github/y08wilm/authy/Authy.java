@@ -18,7 +18,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class Authy implements HttpHandler {
 
-	public HashMap<String, Auth> ipUaToAuthorization = new HashMap<>();
+	public HashMap<String, Auth> ipToAuthorization = new HashMap<>();
 
 	public io.undertow.server.handlers.proxy.SimpleProxyClientProvider proxyClientProvider;
 
@@ -64,13 +64,6 @@ public class Authy implements HttpHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		// TODO Auto-generated method stub
-		String user_agent = null;
-		for (HeaderValues header : exchange.getRequestHeaders()) {
-			if (header.getHeaderName().toString().toLowerCase()
-					.equals("user-agent")) {
-				user_agent = header.element();
-			}
-		}
 		String ip = null;
 		System.out.println(exchange.getRequestMethod() + " "
 				+ exchange.getRequestPath());
@@ -88,9 +81,9 @@ public class Authy implements HttpHandler {
 		}
 		if (exchange.getRequestPath().equals("/_matrix/client/r0/sync")
 				|| exchange.getRequestPath().startsWith(
-						"/_matrix/client/v1/media/thumbnail/")
+						"/_matrix/client/v1/media/thumbnail")
 				|| exchange.getRequestPath().startsWith(
-						"/_matrix/client/v1/media/download/")) {
+						"/_matrix/client/v1/media/download")) {
 			String access_token = null;
 			for (HeaderValues header : exchange.getRequestHeaders()) {
 				if (header.getHeaderName().toString().toLowerCase()
@@ -102,26 +95,16 @@ public class Authy implements HttpHandler {
 				access_token = access_token.replace("Bearer ", "");
 				Auth auth = new Auth(access_token, System.currentTimeMillis()
 						+ (60_000L * 5));
-				ipUaToAuthorization.put(
-						ip
-								+ (user_agent.indexOf("/") != -1 ? user_agent
-										.substring(0, user_agent.indexOf("/"))
-										: user_agent), auth);
+				ipToAuthorization.put(ip, auth);
 				System.out.println("access token " + access_token
-						+ " verified for " + ip + " with ua " + user_agent);
+						+ " verified for " + ip);
 			} else {
-				if (ipUaToAuthorization.containsKey(ip
-						+ (user_agent.indexOf("/") != -1 ? user_agent
-								.substring(0, user_agent.indexOf("/"))
-								: user_agent))) {
-					Auth auth = ipUaToAuthorization.get(ip
-							+ (user_agent.indexOf("/") != -1 ? user_agent
-									.substring(0, user_agent.indexOf("/"))
-									: user_agent));
+				if (ipToAuthorization.containsKey(ip)) {
+					Auth auth = ipToAuthorization.get(ip);
 					if (auth.getExpire_at() < System.currentTimeMillis()) {
 						System.out.println("ERROR: access token "
 								+ auth.getAccess_token() + " is expired for "
-								+ ip + " with ua " + user_agent);
+								+ ip);
 					} else {
 						exchange.getRequestHeaders().add(
 								HttpString.tryFromString("authorization"),
@@ -130,7 +113,7 @@ public class Authy implements HttpHandler {
 				} else {
 					System.out
 							.println("ERROR: access token could not be verified for "
-									+ ip + " with ua " + user_agent);
+									+ ip);
 				}
 			}
 		}
