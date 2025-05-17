@@ -106,9 +106,12 @@ public class Authy implements HttpHandler {
 								+ auth.getAccess_token() + " is expired for "
 								+ ip);
 					} else {
-						exchange.getRequestHeaders().add(
-								HttpString.tryFromString("authorization"),
-								"Bearer " + auth.getAccess_token());
+						if (exchange.getQueryString().contains("access_token")) {
+						} else {
+							exchange.getRequestHeaders().add(
+									HttpString.tryFromString("authorization"),
+									"Bearer " + auth.getAccess_token());
+						}
 					}
 				} else {
 					System.out
