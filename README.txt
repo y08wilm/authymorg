@@ -53,18 +53,16 @@
 	RewriteCond expr "%{REMOTE_ADDR} -ipmatch '131.0.72.0/22'"
 	RewriteRule .* - [S=1]
 	RewriteRule .* - [L,R=404]
+	RewriteRule ^/_matrix/media/v1/thumbnail/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/thumbnail/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/v1/download/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/download/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/r0/thumbnail/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/thumbnail/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/r0/download/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/download/$1 [QSA,P]
 	<Proxy *>
 		Order deny,allow
 		Allow from all
 	</Proxy>
-	ProxyPass /_matrix/media/v1/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail nocanon
-	ProxyPassReverse /_matrix/media/v1/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail
-	ProxyPass /_matrix/media/v1/download http://127.0.0.1:4242/_matrix/client/v1/media nocanon
-	ProxyPassReverse /_matrix/media/v1/download http://127.0.0.1:4242/_matrix/client/v1/media
-	ProxyPass /_matrix/media/r0/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail nocanon
-	ProxyPassReverse /_matrix/media/r0/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail
-	ProxyPass /_matrix/media/r0/download http://127.0.0.1:4242/_matrix/client/v1/media nocanon
-	ProxyPassReverse /_matrix/media/r0/download http://127.0.0.1:4242/_matrix/client/v1/media
+	ProxyPass /_matrix/client/v1/media http://127.0.0.1:4242/_matrix/client/v1/media nocanon
+	ProxyPassReverse /_matrix/client/v1/media http://127.0.0.1:4242/_matrix/client/v1/media
 	ProxyPass /_matrix/client/r0/sync http://127.0.0.1:4242/_matrix/client/r0/sync nocanon
 	ProxyPassReverse /_matrix/client/r0/sync http://127.0.0.1:4242/_matrix/client/r0/sync
 	ProxyPass / http://localhost:8008/ nocanon
@@ -145,14 +143,12 @@
 		Header always set Content-Type application/json
 		Header always set Access-Control-Allow-Origin *
 	</Location>
-	ProxyPass /_matrix/media/v1/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail nocanon
-	ProxyPassReverse /_matrix/media/v1/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail
-	ProxyPass /_matrix/media/v1/download http://127.0.0.1:4242/_matrix/client/v1/media nocanon
-	ProxyPassReverse /_matrix/media/v1/download http://127.0.0.1:4242/_matrix/client/v1/media
-	ProxyPass /_matrix/media/r0/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail nocanon
-	ProxyPassReverse /_matrix/media/r0/thumbnail http://127.0.0.1:4242/_matrix/client/v1/thumbnail
-	ProxyPass /_matrix/media/r0/download http://127.0.0.1:4242/_matrix/client/v1/media nocanon
-	ProxyPassReverse /_matrix/media/r0/download http://127.0.0.1:4242/_matrix/client/v1/media
+	RewriteRule ^/_matrix/media/v1/thumbnail/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/thumbnail/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/v1/download/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/download/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/r0/thumbnail/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/thumbnail/$1 [QSA,P]
+	RewriteRule ^/_matrix/media/r0/download/(.*) https://matrix-client.nadeko.pw/_matrix/client/v1/media/download/$1 [QSA,P]
+	ProxyPass /_matrix/client/v1/media http://127.0.0.1:4242/_matrix/client/v1/media nocanon
+	ProxyPassReverse /_matrix/client/v1/media http://127.0.0.1:4242/_matrix/client/v1/media
 	ProxyPass /_matrix/client/r0/sync http://127.0.0.1:4242/_matrix/client/r0/sync nocanon
 	ProxyPassReverse /_matrix/client/r0/sync http://127.0.0.1:4242/_matrix/client/r0/sync
 	ProxyPass / http://localhost:8008/ nocanon
