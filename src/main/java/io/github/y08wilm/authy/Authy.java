@@ -86,19 +86,11 @@ public class Authy implements HttpHandler {
 		if (ip.contains(", ")) {
 			ip = ip.substring(0, ip.indexOf(", "));
 		}
-		if ((exchange.getRequestPath().equals("/_matrix/client/r0/sync")
-				|| exchange.getRequestPath().equals("/_matrix/client/v1/sync")
+		if (exchange.getRequestPath().equals("/_matrix/client/r0/sync")
 				|| exchange.getRequestPath().startsWith(
 						"/_matrix/client/v1/media/thumbnail/")
 				|| exchange.getRequestPath().startsWith(
-						"/_matrix/client/v1/media/download/")
-				|| exchange.getRequestPath().startsWith(
-						"/_matrix/media/v1/thumbnail/")
-				|| exchange.getRequestPath().startsWith(
-						"/_matrix/media/v1/download/")
-				|| exchange.getRequestPath().startsWith(
-						"/_matrix/media/r0/thumbnail/") || exchange
-				.getRequestPath().startsWith("/_matrix/media/r0/download/"))) {
+						"/_matrix/client/v1/media/download/")) {
 			String access_token = null;
 			for (HeaderValues header : exchange.getRequestHeaders()) {
 				if (header.getHeaderName().toString().toLowerCase()
